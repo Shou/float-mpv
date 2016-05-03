@@ -9,6 +9,12 @@ const St = imports.gi.St;
 
 const Main = imports.ui.main;
 
+
+function id(x) { return x }
+
+function plus1(n) { return n + 1 }
+
+
 function init(em) {
     return new Preview(em)
 }
@@ -29,13 +35,11 @@ Preview.prototype = {
 
     init: function(em) {
         this.extensionMeta = em
-        this.switchCorner(0)
     },
 
     enable: function() {
         this.workspaceSwitchSignal =
-            global.screen.connect( "workspace-switched"
-                                 , Lang.bind(this, this.mpvFloat)
+            global.screen.connect( "workspace-switched" , Lang.bind(this, this.mpvFloat)
                                  )
         this.overviewHidingSignal =
             Main.overview.connect( "hiding"
@@ -94,10 +98,13 @@ Preview.prototype = {
         return mpv
     },
 
-    switchCorner: function(n) {
+    // | Takes a function that modifies the corner int
+    // switchCorner :: (Int -> Int) -> IO ()
+    switchCorner: function(f) {
         let g = Main.layoutManager.getWorkAreaForMonitor(0)
 
-        this.corner = (this.corner + 1) % 4
+        this.corner = f(this.corner) % 4
+        global.log("corner: " + this.corner)
         switch(this.corner) {
             case 0:
                 this.posX = g.x + 10
@@ -129,11 +136,11 @@ Preview.prototype = {
         let th = this.getThumbnail(win, 640)
 
         this.preview.connect( "enter-event"
-                            , Lang.bind(this, this.switchCorner)
+                            , Lang.bind(this, _ => this.switchCorner(plus1))
                             )
 
         this.preview.add_actor(th)
-        this.preview.set_position(this.posX, this.posY)
+        this.switchCorner(id)
 
         Main.layoutManager.addChrome(this.preview)
     },
