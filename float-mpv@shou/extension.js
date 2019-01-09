@@ -35,12 +35,14 @@ Preview.prototype = {
 
     init: function(em) {
         this.extensionMeta = em
+        this.workspaceManager = global.screen || global.workspace_manager
     },
 
     enable: function() {
         this.workspaceSwitchSignal =
-            global.screen.connect( "workspace-switched" , Lang.bind(this, this.mpvFloat)
-                                 )
+            this.workspaceManager.connect( "workspace-switched"
+                                         , Lang.bind(this, this.mpvFloat)
+                                         )
         this.overviewHidingSignal =
             Main.overview.connect( "hiding"
                                  , Lang.bind(this, this.toggleView, false)
@@ -53,7 +55,7 @@ Preview.prototype = {
 
     disable: function() {
         this.removePreview()
-        global.screen.disconnect(this.workspaceSwitchSignal)
+        this.workspaceManager.disconnect(this.workspaceSwitchSignal)
         Main.overview.disconnect(this.overviewHidingSignal)
         Main.overview.disconnect(this.overviewShowingSignal)
     },
@@ -80,12 +82,14 @@ Preview.prototype = {
 
     getMPVWindow: function() {
         let mpv = null
-        let len = global.screen.n_workspaces
+        let len = this.workspaceManager.n_workspaces
 
         for (let i = 0; i < len; i++) {
-            if (global.screen.get_active_workspace_index() === i) continue
+            if (this.workspaceManager.get_active_workspace_index() === i) {
+                continue
+            }
 
-            let ws = global.screen.get_workspace_by_index(i)
+            let ws = this.workspaceManager.get_workspace_by_index(i)
             let wins = ws.list_windows()
 
             for (let j = 0, l = wins.length; j < l; j++) {
